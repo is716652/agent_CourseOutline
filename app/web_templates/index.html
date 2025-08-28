@@ -1,0 +1,134 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="card">
+  <h2>根据模板字段填写内容</h2>
+  <p class="tip">表格字段请用 JSON 数组格式填写，已为你提供示例；列表字段可用逗号或换行分隔。</p>
+  <form method="post" action="{{ url_for('main.render_md') }}">
+    <!-- AI 设置 -->
+    <div class="field">
+      <label>AI 设置</label>
+      <div class="tip">以下字段将由 AI 生成：课程目标、课程内容、教学方法、教学进度安排。你可以设置周数、重点项与排除项作为参考。</div>
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:8px;">
+        <div>
+          <span>计划周数：</span>
+          <input type="number" id="num_weeks" value="18" min="1" max="30" style="width:80px;" />
+        </div>
+        <div>
+          <span>列表渲染样式：</span>
+          <select id="list_style" style="width:140px;">
+            <option value="br" selected>换行</option>
+            <option value="bullet">项目符号</option>
+          </select>
+        </div>
+        <div>
+          <span>大模型：</span>
+          <select id="llm_provider" style="width:160px;">
+            <option value="">离线（无需API）</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="openai">OpenAI (ChatGPT)</option>
+          </select>
+        </div>
+        <div style="flex:1; min-width:220px;">
+          <input type="password" id="llm_api_key" placeholder="API Key（可选，当选择大模型时必填）" />
+        </div>
+        <div style="width:220px;">
+          <input type="text" id="llm_model" placeholder="模型名称（如：deepseek-chat / gpt-4o-mini）" />
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;">
+        <div>
+          <div style="font-size:12px;color:#666;margin-bottom:4px;">重点项（AI会优先覆盖的主题）</div>
+          <textarea id="focus_points" rows="3" placeholder="例如：卷积神经网络、目标检测、模型部署"></textarea>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#666;margin-bottom:4px;">排除项（AI尽量不展开）</div>
+          <textarea id="exclude_points" rows="3" placeholder="例如：自然语言处理、推荐系统"></textarea>
+        </div>
+      </div>
+    </div>
+
+    {% for key, meta in fields.items() %}
+      {% set label = meta.get('label', key) %}
+      {% if meta.get('hidden') %}
+        <input type="hidden" name="{{ key }}" value="" />
+      {% else %}
+      <div class="field">
+        <label>{{ label }} <small>({{ key }} / {{ meta.type }})</small></label>
+        {% if meta.type == 'textarea' %}
+          <textarea name="{{ key }}" rows="5" placeholder="请输入 {{ label }} ..."></textarea>
+        {% elif meta.type == 'list' %}
+          <textarea name="{{ key }}" rows="3" placeholder="请输入{{ label }}，逗号或换行分隔"></textarea>
+        {% elif meta.type == 'table' %}
+          <textarea name="{{ key }}" rows="8" placeholder="{{ examples.get(key, '[]') }}">{{ examples.get(key, '[]') }}</textarea>
+          <div class="tip">表格列：{{ meta.columns|join('、') }}</div>
+        {% else %}
+          <input type="text" name="{{ key }}" placeholder="请输入 {{ label }}"/>
+        {% endif %}
+      </div>
+      {% endif %}
+    {% endfor %}
+    <input type="hidden" name="list_style" id="list_style_hidden" value="br" />
+    <button type="submit" class="btn">渲染 Markdown</button>
+  </form>
+</div>
+
+<script>
+  (function(){
+    const form = document.querySelector('form');
+    const btn = document.getElementById('btn-ai');
+    const listStyleSel = document.getElementById('list_style');
+    const listStyleHidden = document.getElementById('list_style_hidden');
+    if(listStyleSel && listStyleHidden){
+      listStyleSel.addEventListener('change', ()=>{
+        listStyleHidden.value = listStyleSel.value || 'br';
+      });
+    }
+    if(!btn) return;
+    const getVal = (name) => {
+      const el = form.querySelector(`[name="${name}"]`);
+      return el ? (el.value || '').trim() : '';
+    };
+    const setVal = (name, value) => {
+      const el = form.querySelector(`[name="${name}"]`);
+      if(el) el.value = value ?? '';
+    };
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.textContent = 'AI 正在生成...';
+      try {
+        const payload = {
+          course_name: getVal('course_name'),
+          course_code: getVal('course_code'),
+          credit: getVal('credit'),
+          hours: getVal('hours'),
+          prerequisites: getVal('prerequisites'),
+          num_weeks: Number(document.getElementById('num_weeks').value || 18),
+          focus_points: (document.getElementById('focus_points').value || '').trim(),
+          exclude_points: (document.getElementById('exclude_points').value || '').trim(),
+          llm_provider: (document.getElementById('llm_provider').value || '').trim(),
+          llm_api_key: (document.getElementById('llm_api_key').value || '').trim(),
+          llm_model: (document.getElementById('llm_model').value || '').trim()
+        };
+        const res = await fetch('{{ url_for("main.ai_generate") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        setVal('objectives', data.objectives || '');
+        setVal('contents', data.contents || '');
+        setVal('teaching_methods', data.teaching_methods || '');
+        if (data.schedule_table) {
+          setVal('schedule_table', JSON.stringify(data.schedule_table, null, 2));
+        }
+        btn.textContent = 'AI 一键生成（已填充，可继续编辑）';
+      } catch (e) {
+        console.error(e);
+        alert('AI 生成失败，请稍后重试');
+        btn.textContent = 'AI 一键生成（目标/内容/方法/进度）';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="card">
+  <h2>渲染结果预览（Markdown 源）</h2>
+  <pre>{{ markdown_content }}</pre>
+  <a href="{{ download_url }}" class="btn">下载 MD 文件</a>
+  <a href="{{ url_for('main.index') }}" class="btn secondary">返回填写</a>
+</div>
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="card">
+  <h2>🏠 欢迎使用教学大纲工具</h2>
+  <p class="tip">选择您需要的功能：</p>
+  
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:30px;">
+    <!-- 教学大纲生成 -->
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <h3>教学大纲生成</h3>
+      <p>使用AI自动生成完整的教学大纲，包括课程定位、教学目标、教学内容等。</p>
+      <div class="feature-highlights">
+        <span class="highlight">✨ AI智能生成</span>
+        <span class="highlight">📝 完整模板</span>
+        <span class="highlight">⚡ 快速生成</span>
+      </div>
+      <a href="{{ url_for('main.teaching_outline') }}" class="btn btn-primary">开始生成</a>
+    </div>
+    
+    <!-- 模板渲染 -->
+    <div class="feature-card">
+      <div class="feature-icon">📄</div>
+      <h3>模板渲染</h3>
+      <p>基于YAML配置的模板渲染系统，支持复杂表格和自定义字段。</p>
+      <div class="feature-highlights">
+        <span class="highlight">🔧 灵活配置</span>
+        <span class="highlight">📊 支持表格</span>
+        <span class="highlight">📋 模板化</span>
+      </div>
+      <div class="btn btn-secondary" style="opacity:0.6;">需要模板文件</div>
+    </div>
+  </div>
+  
+  <div style="margin-top:40px; padding:20px; background:#f8f9fa; border-radius:8px;">
+    <h3>🚀 快速开始</h3>
+    <ol>
+      <li><strong>教学大纲生成：</strong>填写课程名称等基本信息，AI将自动生成完整大纲</li>
+      <li><strong>自定义配置：</strong>可设置重点模块和排除项，个性化生成内容</li>
+      <li><strong>预览下载：</strong>支持实时预览和Markdown文件下载</li>
+    </ol>
+  </div>
+</div>
+
+<style>
+.feature-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.feature-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.feature-card h3 {
+  margin: 0 0 12px 0;
+  color: #1f2937;
+  font-size: 20px;
+}
+
+.feature-card p {
+  color: #6b7280;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.feature-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.highlight {
+  background: #e0f2fe;
+  color: #0277bd;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-block;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #6b7280;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-block;
+}
+
+ol {
+  text-align: left;
+}
+
+ol li {
+  margin: 8px 0;
+  color: #374151;
+}
+</style>
+{% endblock %}

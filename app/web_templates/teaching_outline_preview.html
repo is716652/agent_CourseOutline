@@ -1,0 +1,201 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="preview-container">
+  <div class="preview-header">
+    <h2>📋 教学大纲预览</h2>
+    <div class="preview-actions">
+      <a href="{{ url_for('main.teaching_outline') }}" class="btn btn-secondary">← 返回生成</a>
+      <a href="{{ download_url }}" class="btn btn-primary">📥 下载Markdown</a>
+    </div>
+  </div>
+  
+  <div class="preview-content">
+    <!-- Markdown内容渲染区域 -->
+    <div class="markdown-preview">
+      <pre id="markdown-content">{{ markdown_content }}</pre>
+    </div>
+  </div>
+</div>
+
+<style>
+.preview-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #eee;
+}
+
+.preview-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.btn-primary {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #45a049;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+.preview-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.markdown-preview {
+  padding: 30px;
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.markdown-preview pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Markdown样式 */
+.markdown-preview h1 {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 20px 0 15px 0;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 8px;
+}
+
+.markdown-preview h2 {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 18px 0 12px 0;
+  color: #34495e;
+}
+
+.markdown-preview h3 {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 15px 0 10px 0;
+  color: #34495e;
+}
+
+.markdown-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0;
+  font-size: 14px;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.markdown-preview th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  color: #495057;
+}
+
+.markdown-preview tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.markdown-preview p {
+  margin: 10px 0;
+}
+
+.markdown-preview strong {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+/* 打印样式 */
+@media print {
+  .preview-header {
+    display: none;
+  }
+  
+  .preview-container {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .preview-content {
+    box-shadow: none;
+  }
+}
+</style>
+
+<script>
+// 简单的Markdown到HTML转换（针对表格）
+function convertMarkdownTables() {
+  const content = document.getElementById('markdown-content');
+  let html = content.textContent;
+  
+  // 转换表格
+  html = html.replace(/\|(.+)\|/g, (match, cells) => {
+    const cellArray = cells.split('|').map(cell => cell.trim());
+    return '<tr>' + cellArray.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
+  });
+  
+  // 转换标题
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  
+  // 转换粗体
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  
+  // 转换换行
+  html = html.replace(/\n/g, '<br>');
+  
+  content.innerHTML = html;
+}
+
+// 页面加载完成后转换格式
+document.addEventListener('DOMContentLoaded', convertMarkdownTables);
+</script>
+{% endblock %}
