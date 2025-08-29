@@ -11,6 +11,7 @@ set "PROJECT_ROOT=%~dp0"
 set "VENV_PATH=%PROJECT_ROOT%.venv"
 set "REQUIREMENTS_FILE=%PROJECT_ROOT%requirements.txt"
 set "PYTHON_SCRIPT=%PROJECT_ROOT%run.py"
+set "PYVENV_CFG=%VENV_PATH%\pyvenv.cfg"
 
 echo 🔍 检查项目环境...
 echo 项目路径: %PROJECT_ROOT%
@@ -30,6 +31,8 @@ if errorlevel 1 (
 :: 显示Python版本信息
 echo ✅ Python版本信息:
 python --version
+for /f "delims=" %%i in ('python -c "import sys; print(sys.executable)"') do set "CURRENT_PYTHON=%%i"
+echo Python可执行文件路径: %CURRENT_PYTHON%
 echo.
 
 :: 检查requirements.txt是否存在
@@ -40,9 +43,19 @@ if not exist "%REQUIREMENTS_FILE%" (
     exit /b 1
 )
 
-:: 检查虚拟环境是否存在
+:: 检查虚拟环境是否存在并验证路径一致性
 if exist "%VENV_PATH%" (
     echo 🔍 检测到现有虚拟环境，正在验证...
+    
+    :: 检查路径一致性
+    if exist "%PYVENV_CFG%" (
+        echo 🔍 检查虚拟环境路径配置...
+        findstr /C:"executable" "%PYVENV_CFG%" | findstr /C:"%CURRENT_PYTHON%" >nul
+        if errorlevel 1 (
+            echo ⚠️  检测到Python路径不一致，准备重新创建虚拟环境...
+            goto :recreate_venv
+        )
+    )
     
     :: 尝试激活虚拟环境并检查是否正常工作
     call "%VENV_PATH%\Scripts\activate.bat" >nul 2>&1
@@ -88,8 +101,9 @@ if exist "%VENV_PATH%" (
 
 :create_venv
 echo.
-echo 🚀 创建新的虚拟环境...
-python -m venv "%VENV_PATH%"
+echo 🚀 使用当前Python创建新虚拟环境...
+echo 执行命令: "%CURRENT_PYTHON%" -m venv "%VENV_PATH%"
+"%CURRENT_PYTHON%" -m venv "%VENV_PATH%"
 if errorlevel 1 (
     echo ❌ 虚拟环境创建失败！
     echo 可能原因：
@@ -101,6 +115,15 @@ if errorlevel 1 (
 )
 
 echo ✅ 虚拟环境创建成功！
+
+:: 显示新的配置
+if exist "%PYVENV_CFG%" (
+    echo 📋 新虚拟环境配置:
+    echo ----------------------------------------
+    type "%PYVENV_CFG%"
+    echo ----------------------------------------
+    echo.
+)
 
 :install_deps
 echo.

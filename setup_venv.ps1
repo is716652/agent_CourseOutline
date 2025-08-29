@@ -56,49 +56,70 @@ if (-not (Test-Path $RequirementsFile)) {
     exit 1
 }
 
-# 检查虚拟环境
+# 检查虚拟环境路径一致性
 $needRecreate = $false
 $needReinstall = $false
+$PyvenvCfg = Join-Path $VenvPath "pyvenv.cfg"
 
 if (Test-Path $VenvPath) {
     Write-Host "🔍 检测到现有虚拟环境，正在验证..." -ForegroundColor Yellow
     
-    # 检查激活脚本是否存在
-    $activateScript = Join-Path $VenvPath "Scripts\Activate.ps1"
-    if (-not (Test-Path $activateScript)) {
-        Write-Host "⚠️  虚拟环境激活脚本缺失" -ForegroundColor Yellow
-        $needRecreate = $true
-    } else {
-        # 尝试激活虚拟环境
-        try {
-            & $activateScript -ErrorAction Stop
-            Write-Host "✅ 虚拟环境激活成功" -ForegroundColor Green
-            
-            # 检查关键依赖
-            Write-Host "🔍 检查依赖包..." -ForegroundColor Yellow
-            $checkResult = python -c "import flask, requests; print('OK')" 2>&1
-            if ($LASTEXITCODE -ne 0) {
-                Write-Host "⚠️  关键依赖缺失，准备重新安装..." -ForegroundColor Yellow
-                $needReinstall = $true
-            } else {
-                Write-Host "✅ 关键依赖检查通过" -ForegroundColor Green
+    # 检查路径一致性
+    if (Test-Path $PyvenvCfg) {
+        Write-Host "🔍 检查虚拟环境路径配置..." -ForegroundColor Yellow
+        $cfgContent = Get-Content $PyvenvCfg
+        $executableLine = $cfgContent | Where-Object { $_ -match "^executable\s*=" }
+        
+        if ($executableLine) {
+            $cfgPythonPath = ($executableLine -split "=", 2)[1].Trim()
+            if ($cfgPythonPath -ne $currentPython) {
+                Write-Host "⚠️  检测到Python路径不一致，准备重新创建虚拟环境..." -ForegroundColor Yellow
+                Write-Host "配置文件中的Python路径: $cfgPythonPath" -ForegroundColor Red
+                Write-Host "当前系统Python路径: $currentPython" -ForegroundColor Green
+                $needRecreate = $true
             }
-            
-            # 检查依赖完整性
-            if (-not $needReinstall) {
-                Write-Host "🔍 验证依赖完整性..." -ForegroundColor Yellow
-                $pipCheck = pip check 2>&1
+        }
+    }
+    
+    # 如果路径一致，继续检查其他问题
+    if (-not $needRecreate) {
+        # 检查激活脚本是否存在
+        $activateScript = Join-Path $VenvPath "Scripts\Activate.ps1"
+        if (-not (Test-Path $activateScript)) {
+            Write-Host "⚠️  虚拟环境激活脚本缺失" -ForegroundColor Yellow
+            $needRecreate = $true
+        } else {
+            # 尝试激活虚拟环境
+            try {
+                & $activateScript -ErrorAction Stop
+                Write-Host "✅ 虚拟环境激活成功" -ForegroundColor Green
+                
+                # 检查关键依赖
+                Write-Host "🔍 检查依赖包..." -ForegroundColor Yellow
+                $checkResult = python -c "import flask, requests; print('OK')" 2>&1
                 if ($LASTEXITCODE -ne 0) {
-                    Write-Host "⚠️  依赖版本冲突，准备重新安装..." -ForegroundColor Yellow
+                    Write-Host "⚠️  关键依赖缺失，准备重新安装..." -ForegroundColor Yellow
                     $needReinstall = $true
                 } else {
-                    Write-Host "✅ 依赖完整性验证通过" -ForegroundColor Green
+                    Write-Host "✅ 关键依赖检查通过" -ForegroundColor Green
                 }
+                
+                # 检查依赖完整性
+                if (-not $needReinstall) {
+                    Write-Host "🔍 验证依赖完整性..." -ForegroundColor Yellow
+                    $pipCheck = pip check 2>&1
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Host "⚠️  依赖版本冲突，准备重新安装..." -ForegroundColor Yellow
+                        $needReinstall = $true
+                    } else {
+                        Write-Host "✅ 依赖完整性验证通过" -ForegroundColor Green
+                    }
+                }
+                
+            } catch {
+                Write-Host "⚠️  虚拟环境损坏，准备重新创建..." -ForegroundColor Yellow
+                $needRecreate = $true
             }
-            
-        } catch {
-            Write-Host "⚠️  虚拟环境损坏，准备重新创建..." -ForegroundColor Yellow
-            $needRecreate = $true
         }
     }
 } else {

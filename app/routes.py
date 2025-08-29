@@ -255,3 +255,25 @@ def download_word_document(filename):
         return redirect(url_for('main.teaching_outline'))
     
     return send_file(file_path, as_attachment=True, download_name=filename)
+
+@bp.route('/template/download', methods=['GET'])
+def download_template_document():
+    """下载教学大纲模板文档"""
+    template_type = request.args.get('type', 'docx')
+    
+    if template_type == 'docx':
+        template_path = os.path.join(PROJECT_ROOT, 'templates', '教学大纲-模板.docx')
+        download_name = '教学大纲-模板.docx'
+    elif template_type == 'md':
+        template_path = os.path.join(PROJECT_ROOT, 'templates', '教学大纲模板.md')
+        download_name = '教学大纲模板.md'
+    elif template_type == 'variables':
+        template_path = os.path.join(PROJECT_ROOT, 'templates', '模板变量说明.md')
+        download_name = '模板变量说明.md'
+    else:
+        return jsonify({'error': '不支持的模板类型'}), 400
+    
+    if not os.path.exists(template_path):
+        return jsonify({'error': '模板文件不存在'}), 404
+    
+    return send_file(template_path, as_attachment=True, download_name=download_name)

@@ -4,6 +4,24 @@
   <h2>📚 教学大纲自动生成</h2>
   <p class="tip">填写基本信息，AI将自动生成完整的教学大纲内容。支持自定义重点模块和排除项。</p>
   
+  <!-- 模板格式查看链接 -->
+  <div style="margin:15px 0; padding:12px; background:#e8f5e8; border-radius:6px; border-left:4px solid #4CAF50;">
+    <div style="font-size:14px; color:#2e7d32; margin-bottom:8px;">📖 模板格式参考</div>
+    <div style="display:flex; gap:15px; align-items:center;">
+      <a href="{{ url_for('main.download_template_document', type='docx') }}" 
+         target="_blank" 
+         style="color:#1976d2; text-decoration:none; font-size:13px;">
+        📄 查看Word模板格式
+      </a>
+      <a href="{{ url_for('main.download_template_document', type='variables') }}" 
+         target="_blank" 
+         style="color:#1976d2; text-decoration:none; font-size:13px;">
+        📋 查看模板变量说明
+      </a>
+      <span style="color:#666; font-size:12px;">点击可下载查看标准教学大纲模板格式和变量说明</span>
+    </div>
+  </div>
+  
   <!-- 基本信息表单 -->
   <form id="outline-form">
     <div class="field">
